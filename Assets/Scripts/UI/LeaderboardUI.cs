@@ -80,7 +80,6 @@ public class LeaderboardUI : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
-       
         SceneManager.LoadScene(mainMenuSceneName);
     }
 }

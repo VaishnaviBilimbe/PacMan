@@ -31,8 +31,22 @@ public class LeaderboardManager : MonoBehaviour
     {
         if (string.IsNullOrEmpty(playerName)) playerName = "Anonymous";
 
-        leaderboardData.entries.Add(new LeaderboardEntry(playerName, score));
+        // Check if player already exists
+        LeaderboardEntry existingEntry = leaderboardData.entries.FirstOrDefault(e => e.playerName == playerName);
         
+        if (existingEntry != null)
+        {
+            // Update score if new score is higher
+            if (score > existingEntry.score)
+            {
+                existingEntry.score = score;
+            }
+        }
+        else
+        {
+            leaderboardData.entries.Add(new LeaderboardEntry(playerName, score));
+        }
+
         // Sort descending and keep top X
         leaderboardData.entries = leaderboardData.entries
             .OrderByDescending(e => e.score)
@@ -60,7 +74,26 @@ public class LeaderboardManager : MonoBehaviour
         {
             string json = File.ReadAllText(filePath);
             leaderboardData = JsonUtility.FromJson<LeaderboardData>(json);
-            Debug.Log("[LeaderboardManager] Loaded data.");
+
+            // Deduplicate existing entries from before the fix
+            var uniqueEntries = new Dictionary<string, LeaderboardEntry>();
+            foreach (var entry in leaderboardData.entries)
+            {
+                if (uniqueEntries.TryGetValue(entry.playerName, out var existing))
+                {
+                    if (entry.score > existing.score)
+                    {
+                        existing.score = entry.score;
+                    }
+                }
+                else
+                {
+                    uniqueEntries[entry.playerName] = entry;
+                }
+            }
+            leaderboardData.entries = uniqueEntries.Values.ToList();
+
+            Debug.Log("[LeaderboardManager] Loaded and deduplicated data.");
         }
         else
         {

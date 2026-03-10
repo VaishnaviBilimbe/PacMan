@@ -8,7 +8,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 startPosition;
     private Quaternion startRotation;
     private Vector3 moveDirection = Vector3.zero;
-    private Vector3 nextDirection = Vector3.zero;
+    private Vector3 nextDirection = Vector3.left;
     private Vector3 targetPosition;
     
     [Header("Power-Up Status")]
@@ -177,7 +177,7 @@ public class PlayerController : MonoBehaviour
         transform.rotation = startRotation;
         targetPosition = startPosition;
         moveDirection = Vector3.zero;
-        nextDirection = Vector3.zero;
+        nextDirection = Vector3.left;
         rb.linearVelocity = Vector3.zero;
     }
 

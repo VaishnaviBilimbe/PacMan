@@ -42,10 +42,7 @@ public class SerialInputManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-    }
 
-    void Start()
-    {
         portName = PlayerPrefs.GetString("SerialPort", "None");
         baudRate = PlayerPrefs.GetInt("BaudRate", 9600);
 
@@ -56,6 +53,11 @@ public class SerialInputManager : MonoBehaviour
         }
 
         OpenPort();
+    }
+
+    void Start()
+    {
+        // Initialization moved to Awake to avoid race conditions with MainMenuUI checking IsConnected in its Start()
     }
 
     // ─── Public API ──────────────────────────────────────────────────────────

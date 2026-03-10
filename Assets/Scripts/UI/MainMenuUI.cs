@@ -28,28 +28,40 @@ public class MainMenuUI : MonoBehaviour
 
     void Start()
     {
-        // 1. Initial State: Show Login Panel, Hide Settings Panel
-        if (loginPanel != null) loginPanel.SetActive(true);
-        if (settingsPanel != null) settingsPanel.SetActive(false);
+        // 1. Initial State: Determine which panel to show first
+        if (SerialInputManager.Instance != null && SerialInputManager.Instance.IsConnected)
+        {
+            Debug.Log("Connected");
+            // Already connected -> Skip settings, show Login first
+            if (settingsPanel != null) settingsPanel.SetActive(false);
+            if (loginPanel != null) loginPanel.SetActive(true);
+        }
+        else
+        {
+            Debug.Log("NOt Connected");
+            // Not connected -> Show Settings first, hide Login
+            if (loginPanel != null) loginPanel.SetActive(false);
+            if (settingsPanel != null) settingsPanel.SetActive(true);
+        }
 
         if (warningText != null)
             warningText.gameObject.SetActive(false);
             
         // 2. Add listeners to buttons instead of doing it from Inspector
-        if (nextButton != null)
+        if (nextButton != null) // Now this is on the Login panel to start the game
         {
             nextButton.onClick.RemoveAllListeners();
             nextButton.onClick.AddListener(OnNextClicked);
         }
 
-        if (realStartGameButton != null)
+        if (realStartGameButton != null) // Now this is on the Settings panel to go to Login
         {
             realStartGameButton.onClick.RemoveAllListeners();
             realStartGameButton.onClick.AddListener(OnStartGameClicked);
         }
     }
 
-    // Called when user clicks "Next" or "Login" on the first panel
+    // Called when user clicks "Play" on the Login panel
     public void OnNextClicked()
     {
         string playerName = nameInputField != null ? nameInputField.text : "";
@@ -69,7 +81,6 @@ public class MainMenuUI : MonoBehaviour
 
         // Hide warning if successful
         if (warningText != null) warningText.gameObject.SetActive(false);
-
         // Save player name
         PlayerPrefs.SetString("PlayerName", playerName);
         if (GameManager.Instance != null)
@@ -77,14 +88,12 @@ public class MainMenuUI : MonoBehaviour
             GameManager.Instance.playerName = playerName;
         }
 
-        Debug.Log($"[MainMenuUI] Name validated: {playerName}. Opening Settings Panel.");
+        Debug.Log($"[MainMenuUI] Name validated: {playerName}. Loading Gameplay Scene.");
 
-        // Transition: Hide Login Panel, Show Settings Panel
-        if (loginPanel != null) loginPanel.SetActive(false);
-        if (settingsPanel != null) settingsPanel.SetActive(true);
+        SceneManager.LoadScene(gameSceneName);
     }
 
-    // Called when user clicks "Start Game" on the settings panel
+    // Called when user clicks "Next" on the Settings panel
     public void OnStartGameClicked()
     {
         // Save serial / joystick settings so SerialInputManager can read them
@@ -106,7 +115,10 @@ public class MainMenuUI : MonoBehaviour
 
         PlayerPrefs.Save();
 
-        Debug.Log($"[MainMenuUI] Starting game scene...");
-        SceneManager.LoadScene(gameSceneName);
+        Debug.Log($"[MainMenuUI] Opening Login screen...");
+        
+        // Transition: Hide Settings Panel, Show Login Panel
+        if (settingsPanel != null) settingsPanel.SetActive(false);
+        if (loginPanel != null) loginPanel.SetActive(true);
     }
 }

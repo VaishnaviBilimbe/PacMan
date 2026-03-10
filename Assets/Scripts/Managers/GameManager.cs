@@ -79,6 +79,7 @@ public class GameManager : MonoBehaviour
         
         score = 0;
         dotsEaten = 0;
+        lives = initialLives;
         levelWon = false;
         
         if (fullRestart)
@@ -199,6 +200,13 @@ public class GameManager : MonoBehaviour
     public void OnDotEaten()
     {
         dotsEaten++;
+
+        // for testing should removed later---------
+       /* if (dotsEaten > 2)
+        {
+            LevelCompleted();
+            return;
+        }*/
         AddScore(10);
 
         if (dotsEaten == 70)
