@@ -1,0 +1,27 @@
+using UnityEngine;
+
+public class BonusFruit : MonoBehaviour
+{
+    public int scoreValue = 100; // Default for cherry, override in Inspector if needed
+    public float duration = 9f;
+
+    private void Start()
+    {
+        Destroy(gameObject, duration);
+        if (name.Contains("Cherry")) scoreValue = 100;
+        else if (name.Contains("Strawberry")) scoreValue = 300;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.AddScore(scoreValue);
+                Debug.Log($"[BonusFruit] {name} collected! +{scoreValue} points");
+            }
+            Destroy(gameObject);
+        }
+    }
+}
