@@ -37,6 +37,7 @@ public class GameManager : MonoBehaviour
     public int totalDots = 0;
     public bool levelWon = false;
     private bool isResetting = false;
+    private int deathsInCurrentLevel = 0;
 
     void Awake()
     {
@@ -70,7 +71,23 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        ReacquireReferences();
         ResetGame();
+    }
+
+    private void ReacquireReferences()
+    {
+        if (player == null) player = FindFirstObjectByType<PlayerController>();
+        if (ghostManager == null) ghostManager = FindFirstObjectByType<GhostManager>();
+        if (mazeGenerator == null) mazeGenerator = FindFirstObjectByType<MazeGenerator>();
+        
+        // If they are still null, it might be because they were destroyed from a previous scene
+        // but the GameManager persists. Let's find them again.
+        player = FindFirstObjectByType<PlayerController>();
+        ghostManager = FindFirstObjectByType<GhostManager>();
+        mazeGenerator = FindFirstObjectByType<MazeGenerator>();
+
+        Debug.Log("[GameManager] Reacquired scene references.");
     }
 
     public void ResetGame(bool fullRestart = false)
@@ -81,6 +98,7 @@ public class GameManager : MonoBehaviour
         dotsEaten = 0;
         lives = initialLives;
         levelWon = false;
+        deathsInCurrentLevel = 0;
         
         if (fullRestart)
         {
@@ -150,13 +168,28 @@ public class GameManager : MonoBehaviour
     private IEnumerator ResetRoundRoutine()
     {
         isResetting = true;
+        deathsInCurrentLevel++;
         
+        // Pause everyone for a second
         if (player != null) player.OnCaughtByGhost();
+        if (ghostManager != null) ghostManager.SetAllGhostsPaused(true);
 
-        yield return new WaitForSeconds(resetDelay);
+        // Visual feedback
+        if (player != null) LifeLossFeedback.Create(player.transform.position);
 
+        yield return new WaitForSeconds(1f); // 1 second pause
+
+        // Reset positions
         if (player != null) player.ResetToStartPosition();
-        if (ghostManager != null) ghostManager.ResetAllGhosts();
+        
+        // 1st death -> immediate chase. Subsequent/2nd death -> delayed release.
+        bool immediate = (deathsInCurrentLevel == 1);
+        
+        if (ghostManager != null) 
+        {
+            ghostManager.SetAllGhostsPaused(false);
+            ghostManager.ResetAllGhosts(false); 
+        }
 
         if (player != null) player.Revive();
 
@@ -175,6 +208,8 @@ public class GameManager : MonoBehaviour
         }
 
         if (leaderBoardPanel != null) leaderBoardPanel.SetActive(true);
+        if (ghostManager != null) ghostManager.SetAllGhostsPaused(true);
+        if (player != null) player.OnCaughtByGhost();
     }
 
     public void LevelCompleted()

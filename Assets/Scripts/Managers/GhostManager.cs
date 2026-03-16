@@ -138,14 +138,26 @@ public class GhostManager : MonoBehaviour
         yield return new WaitForSeconds(releaseInterval);
         ghost.Release();
     }
-    public void ResetAllGhosts()
+    public void ResetAllGhosts(bool immediateChase = false)
     {
         StopAllCoroutines();
         foreach (var g in ghosts)
         {
-            if (g != null) g.ResetToHouse();
+            if (g != null)
+            {
+                g.ResetToHouse();
+            }
         }
+        
         StartCoroutine(ReleaseGhostsRoutine());
         StartCoroutine(ChaseScatterCycleRoutine());
+    }
+
+    public void SetAllGhostsPaused(bool paused)
+    {
+        foreach (var g in ghosts)
+        {
+            if (g != null) g.SetPaused(paused);
+        }
     }
 }

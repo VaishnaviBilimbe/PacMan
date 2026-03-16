@@ -46,7 +46,7 @@ public class PlayerController : MonoBehaviour
         rb.useGravity = false;
         rb.isKinematic = true; 
 
-        playerRenderer = GetComponent<Renderer>();
+        playerRenderer = GetComponentInChildren<Renderer>();
         if (playerRenderer != null)
         {
             normalColor = playerRenderer.material.color;
@@ -162,10 +162,15 @@ public class PlayerController : MonoBehaviour
     }
     public void OnCaughtByGhost()
     {
-        if (isDead || isInvincible) return; // Ignore if dead or has Health Orb powerup
+        if (isDead || isInvincible) return; 
         isDead = true;
-        rb.linearVelocity = Vector3.zero;
         moveDirection = Vector3.zero;
+        nextDirection = Vector3.zero;
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
         Debug.Log("[PlayerController] Caught by ghost!");
         
         if (GameManager.Instance != null)

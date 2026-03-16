@@ -63,19 +63,8 @@ public class LeaderboardUI : MonoBehaviour
 
     public void PlayAgain()
     {
-        if (GameManager.Instance != null)
-        {
-            if (GameManager.Instance.levelWon)
-            {
-                // Progress to next level in-place
-                GameManager.Instance.IncrementLevel();
-            }
-            else
-            {
-                // Restart same level in-place (no scene reload)
-                GameManager.Instance.ResetGame(false);
-            }
-        }
+        // Reload the current scene to ensure a clean state
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     public void ReturnToMainMenu()

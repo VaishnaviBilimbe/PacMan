@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 public enum GhostType { Blinky, Pinky, Inky, Clyde }
@@ -74,6 +74,8 @@ public class GhostController : MonoBehaviour
 
     // Eaten — remember where the house is to return to
     private bool returningToHouse = false;
+    
+    private bool isPaused = false;
 
     private MazeGenerator mazeGen;
 
@@ -112,8 +114,7 @@ public class GhostController : MonoBehaviour
 
     void Update()
     {
-        // Enforce Y height to prevent floor passthrough
-        //transform.position = new Vector3(transform.position.x, startPosition.y, transform.position.z);
+        if (isPaused) return;
 
         // Execute active state update
         activeUpdate?.Invoke();
@@ -129,7 +130,7 @@ public class GhostController : MonoBehaviour
 
     public void EnterFrightenedMode()
     {
-        if (currentState == GhostState.Eaten) return;  // Already eaten, skip
+        if (currentState == GhostState.Eaten || currentState == GhostState.InHouse || currentState == GhostState.ExitingHouse) return;
 
         float duration = FRIGHTENED_DURATION;
         if (GameManager.Instance != null)
@@ -143,11 +144,12 @@ public class GhostController : MonoBehaviour
 
     public void SetChaseMode(bool chase)
     {
-        /* if (currentState == GhostState.InHouse ||
-            // currentState == GhostState.ExitingHouse ||
-             currentState == GhostState.Frightened ||
-             currentState == GhostState.Eaten) return;*/
-        Debug.Log("setchase mode");
+        if (currentState == GhostState.InHouse ||
+            currentState == GhostState.ExitingHouse ||
+            currentState == GhostState.Frightened ||
+            currentState == GhostState.Eaten) return;
+            
+        Debug.Log("setchase mode : " + chase);
         SetState(chase ? GhostState.Chase : GhostState.Scatter);
     }
 
@@ -156,7 +158,23 @@ public class GhostController : MonoBehaviour
         transform.position = startPosition;
         moveDir = Vector3.zero;
         isAtNode = true;
+        isPaused = false;
         SetState(GhostState.InHouse);
+    }
+
+    public void ResetToChaseImmediately()
+    {
+        transform.position = houseExitPoint;
+        targetNode = houseExitPoint;
+        moveDir = Vector3.forward;
+        isAtNode = true;
+        isPaused = false;
+        SetState(GhostState.Chase);
+    }
+
+    public void SetPaused(bool paused)
+    {
+        isPaused = paused;
     }
 
     private void SetState(GhostState newState)
@@ -213,12 +231,14 @@ public class GhostController : MonoBehaviour
                                                   moveSpeed * Time.deltaTime);
         if (Vector3.Distance(transform.position, target) < 0.1f)
         {
-            Debug.Log("update exiting");
+            Debug.Log("update exiting : complete");
             transform.position = target;
             targetNode = target;
             isAtNode = true;
-            moveDir = Vector3.forward; // Ensure we start with a valid direction
-            SetState(GhostState.Chase);
+            moveDir = Vector3.forward; 
+            
+            bool chase = manager != null ? manager.IsChaseMode : true;
+            SetState(chase ? GhostState.Chase : GhostState.Scatter);
         }
     }
 
@@ -456,7 +476,12 @@ public class GhostController : MonoBehaviour
     private void UpdateColor(Color c)
     {
         if (ghostRenderer != null)
+        {
             ghostRenderer.material.color = c;
+            // Also update emission color for visual punch
+            ghostRenderer.material.SetColor("_EmissionColor", c);
+            ghostRenderer.material.EnableKeyword("_EMISSION");
+        }
     }
 
     private Vector3 SnapToAxis(Vector3 v)
