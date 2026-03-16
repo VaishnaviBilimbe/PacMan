@@ -118,6 +118,27 @@ public class GhostController : MonoBehaviour
 
         // Execute active state update
         activeUpdate?.Invoke();
+
+        // Handle visual feedback for frightened mode even when not in Frightened state (e.g., in house)
+        if (frightenedTimeLeft > 0 && currentState != GhostState.Eaten)
+        {
+            frightenedTimeLeft -= Time.deltaTime;
+            
+            if (frightenedTimeLeft <= FLASH_START)
+            {
+                bool flashOn = Mathf.FloorToInt(frightenedTimeLeft * 4) % 2 == 0;
+                UpdateColor(flashOn ? flashColor : frightenedColor);
+            }
+            else
+            {
+                UpdateColor(frightenedColor);
+            }
+
+            if (frightenedTimeLeft <= 0)
+            {
+                UpdateColor(normalColor);
+            }
+        }
     }
 
     // ── Public API (called by GhostManager) ──────────────────────────────────
@@ -130,16 +151,25 @@ public class GhostController : MonoBehaviour
 
     public void EnterFrightenedMode()
     {
-        if (currentState == GhostState.Eaten || currentState == GhostState.InHouse || currentState == GhostState.ExitingHouse) return;
+        if (currentState == GhostState.Eaten) return;
 
         float duration = FRIGHTENED_DURATION;
         if (GameManager.Instance != null)
             duration = GameManager.Instance.GetPowerUpDuration();
 
         frightenedTimeLeft = duration;
-        SetState(GhostState.Frightened);
-        // Reverse direction immediately
-        moveDir = -moveDir;
+        
+        // If inside, just turn blue but stay in home/exit state
+        if (currentState == GhostState.InHouse || currentState == GhostState.ExitingHouse)
+        {
+            UpdateColor(frightenedColor);
+        }
+        else
+        {
+            SetState(GhostState.Frightened);
+            // Reverse direction immediately
+            moveDir = -moveDir;
+        }
     }
 
     public void SetChaseMode(bool chase)
@@ -237,8 +267,15 @@ public class GhostController : MonoBehaviour
             isAtNode = true;
             moveDir = Vector3.forward; 
             
-            bool chase = manager != null ? manager.IsChaseMode : true;
-            SetState(chase ? GhostState.Chase : GhostState.Scatter);
+            if (frightenedTimeLeft > 0)
+            {
+                SetState(GhostState.Frightened);
+            }
+            else
+            {
+                bool chase = manager != null ? manager.IsChaseMode : true;
+                SetState(chase ? GhostState.Chase : GhostState.Scatter);
+            }
         }
     }
 

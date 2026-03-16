@@ -25,7 +25,8 @@ public class PlayerController : MonoBehaviour
     private Coroutine ghostCoroutine;
     private Coroutine invincibilityCoroutine;
 
-    private Renderer playerRenderer;
+    public Material playerMat;
+    private SkinnedMeshRenderer playerRenderer;
     private Color normalColor;
 
     void Awake()
@@ -46,7 +47,7 @@ public class PlayerController : MonoBehaviour
         rb.useGravity = false;
         rb.isKinematic = true; 
 
-        playerRenderer = GetComponentInChildren<Renderer>();
+        playerRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
         if (playerRenderer != null)
         {
             normalColor = playerRenderer.material.color;
@@ -240,18 +241,34 @@ public class PlayerController : MonoBehaviour
     {
         if (playerRenderer == null) return;
 
+        Material mat = playerRenderer.material;
+
+        Color targetColor = normalColor;
+        bool useEmission = false;
+
         if (isInvincible)
         {
-            playerRenderer.material.color = Color.green;
+            targetColor = Color.green;
+            useEmission = true;
         }
         else if (currentSpeedMultiplier > 1f)
         {
-            playerRenderer.material.color = Color.red;
+            targetColor = Color.red;
+            useEmission = true;
+        }
+
+        if (mat.HasProperty("_BaseColor"))
+            mat.SetColor("_BaseColor", targetColor);
+
+       /* if (useEmission)
+        {
+            mat.EnableKeyword("_EMISSION");
+            mat.SetColor("_EmissionColor", targetColor);
         }
         else
         {
-            playerRenderer.material.color = normalColor;
-        }
+            mat.DisableKeyword("_EMISSION");
+        }*/
     }
 
     private void StopAllPowerUps()

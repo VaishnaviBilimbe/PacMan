@@ -242,6 +242,7 @@ public class GameManager : MonoBehaviour
             LevelCompleted();
             return;
         }*/
+        if (player != null) PointsFeedback.Create(player.transform.position, "+10", Color.yellow);
         AddScore(10);
 
         if (dotsEaten == 70)
